@@ -4,6 +4,12 @@
 
 ErgoLens is a high-performance document intelligence platform that bridges the gap between static book data and dynamic AI exploration. By integrating automated web scraping, high-dimensional vector search, and Large Language Model orchestration, ErgoLens delivers deep-dive semantic analysis, interactive Q&A, and personalized literary discovery — all from a single, unified interface.
 
+
+---
+##  Quick Setup
+
+👉 [Setup Instructions](./setup.md)
+
 ---
 
 ## 📑 Table of Contents
@@ -38,61 +44,7 @@ ErgoLens is built around three core pillars:
 
 ErgoLens follows a fully decoupled full-stack architecture. The Django REST Framework backend and React 18 frontend are independent services that communicate exclusively through a secured REST API.
 
-```mermaid
-graph TB
-    subgraph Client["🖥️ Frontend — React 18 + Vite"]
-        UI[User Interface]
-        Auth[JWT Auth Layer]
-        RAGChat[Q&A Chat Interface]
-        InsightPanel[AI Insight Panel]
-        BookCatalog[Book Catalog View]
-    end
-
-    subgraph Gateway["🔐 API Gateway — Django REST Framework"]
-        JWT[SimpleJWT Middleware]
-        Router[URL Router]
-    end
-
-    subgraph Core["⚙️ Backend Core — Django 4.2+"]
-        Views[DRF Views & Serializers]
-        Cache[Multi-tier Cache Layer]
-        Startup[Startup Optimization Routine]
-    end
-
-    subgraph RAG["🧠 RAG Engine"]
-        Embedder[Embeddings — all-MiniLM-L6-v2]
-        VectorStore[ChromaDB Vector Store]
-        Pipeline[RAG Pipeline Orchestrator]
-        LLMRouter[AI Provider Abstraction Layer]
-    end
-
-    subgraph LLMs["🤖 LLM Providers"]
-        Groq[Groq API]
-        OpenAI[OpenAI API]
-    end
-
-    subgraph Scraper["🕷️ Scraper Engine"]
-        Selenium[Selenium Headless Browser]
-        BS4[BeautifulSoup4 Parser]
-        RetryLogic[Retry & Pagination Logic]
-    end
-
-    subgraph DB["🗄️ Data Stores"]
-        MySQL[(MySQL / SQLite3)]
-        ChromaDB[(ChromaDB — Vectors)]
-    end
-
-    UI --> Auth --> JWT --> Router --> Views
-    Views --> Cache --> MySQL
-    Views --> Pipeline
-    Startup --> Embedder
-    Pipeline --> Embedder --> ChromaDB
-    Pipeline --> LLMRouter
-    LLMRouter -->|Primary| Groq
-    LLMRouter -->|Fallback| OpenAI
-    Scraper --> Selenium --> BS4 --> RetryLogic --> MySQL
-    VectorStore --> ChromaDB
-```
+![Architecture Diagram](screenshots/architecture_diagram.png)
 
 ---
 
@@ -100,26 +52,7 @@ graph TB
 
 The Retrieval-Augmented Generation pipeline is the intelligence backbone of ErgoLens. It ensures that every AI response is grounded in actual ingested book data rather than pure model hallucination.
 
-```mermaid
-flowchart TD
-    A([User submits a natural language query]) --> B[Query received by RAG Pipeline Orchestrator]
-    B --> C[Query vectorized using all-MiniLM-L6-v2\n384-dimensional embedding]
-    C --> D[Cosine similarity search\nagainst ChromaDB vector store]
-    D --> E{Relevant chunks\nfound?}
-    E -->|Yes| F[Top-K literary fragments retrieved\nwith similarity scores]
-    E -->|No| G[Return graceful no-result response]
-    F --> H[Fragments assembled into\nstructured context window]
-    H --> I[Context + User Query → LLM Prompt constructed]
-    I --> J{Check DEFAULT_PROVIDER}
-    J -->|Groq| K[Send to Groq API]
-    J -->|OpenAI| L[Send to OpenAI API]
-    K --> M{Success?}
-    L --> M
-    M -->|Yes| N[LLM synthesizes answer with contextual citations]
-    M -->|Rate limit / Error| O[Automatic Fallback to secondary provider]
-    O --> N
-    N --> P([Cited, grounded answer returned to user])
-```
+![RAG pipeline workflow](screenshots/rag_workflow.png)
 
 ### RAG Processing Stages
 
@@ -145,55 +78,14 @@ The retrieved passages are bundled into a structured prompt alongside the origin
 
 ErgoLens automates the process of populating its database with book data from external literary catalogs. The scraper is production-hardened with retry logic, dynamic wait states, and pagination traversal.
 
-```mermaid
-flowchart TD
-    A([Scraper triggered manually or via admin]) --> B[Selenium launches headless Chrome browser\nvia Selenium Manager auto-resolution]
-    B --> C[Navigate to target catalog URL]
-    C --> D[Wait for dynamic JS content to render\nusing explicit element wait-states]
-    D --> E[BeautifulSoup4 parses rendered HTML]
-    E --> F[Extract structured book metadata:\ntitle, category, rating, description, URL]
-    F --> G{More pages?}
-    G -->|Yes — paginate| C
-    G -->|No| H[Batch-write records to MySQL / SQLite3]
-    H --> I[Trigger RAG embedding pipeline\nfor each new book record]
-    I --> J[Text chunked → vectorized → stored in ChromaDB]
-    J --> K[Cache invalidated at database layer]
-    K --> L([Books available in catalog and Q&A engine])
-
-    style A fill:#4f46e5,color:#fff
-    style L fill:#059669,color:#fff
-```
-
+![Scraper Workflow](screenshots/scraper_workflow.png)
 ---
 
 ## 🔐 Authentication Flow
 
 All advanced features — AI insights, chat history, sentiment analysis — are protected behind JWT-authenticated routes.
 
-```mermaid
-sequenceDiagram
-    actor User
-    participant Frontend as React Frontend
-    participant Backend as Django DRF
-    participant DB as MySQL / SQLite3
-
-    User->>Frontend: Enter credentials (admin / admin)
-    Frontend->>Backend: POST /api/token/ {username, password}
-    Backend->>DB: Validate credentials
-    DB-->>Backend: User record confirmed
-    Backend-->>Frontend: {access_token, refresh_token}
-    Frontend->>Frontend: Store tokens in memory / local state
-
-    User->>Frontend: Navigate to protected route (AI Insights, Q&A)
-    Frontend->>Backend: GET /api/... with Authorization: Bearer <access_token>
-    Backend->>Backend: Verify JWT signature & expiry
-    Backend-->>Frontend: Protected resource payload
-
-    Note over Frontend,Backend: On token expiry
-    Frontend->>Backend: POST /api/token/refresh/ {refresh_token}
-    Backend-->>Frontend: New access_token issued
-```
-
+![Project Workflow](screenshots/projects_flow.png)
 ---
 
 ## 🚀 Key Features
@@ -296,17 +188,7 @@ Without this routine, the first embedding request would incur a multi-second mod
 
 ### `rag/` Module — Vector Lifecycle
 
-```mermaid
-flowchart LR
-    A[Book Text] --> B[embeddings.py\nSentenceTransformer chunking & vectorization]
-    B --> C[vector_store.py\nChromaDB persistence layer]
-    C --> D[(ChromaDB\nPersistent Store)]
-    E[User Query] --> F[embeddings.py\nQuery vectorization]
-    F --> G[vector_store.py\nCosine similarity retrieval]
-    G --> D
-    D --> H[pipeline.py\nContext assembly & LLM dispatch]
-    H --> I[AI Provider Abstraction Layer]
-```
+![RAG Pipeline](screenshots/rag_pipeline.png)
 
 - `embeddings.py` — Wraps the SentenceTransformer model. Handles both document chunking (with semantic overlap) and query embedding. Keeps all vectorization logic centralized and model-agnostic.
 - `vector_store.py` — Provides a clean interface to ChromaDB. Handles collection creation, upsert operations, and similarity search. Abstracts all ChromaDB API details from the rest of the application.
