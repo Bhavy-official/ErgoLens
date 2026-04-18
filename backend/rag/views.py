@@ -6,6 +6,7 @@ from rest_framework import serializers
 
 from chat.models import ChatMessage
 from .pipeline import RAGPipeline
+from config.startup import SENTENCE_TRANSFORMER  # <-- import the preloaded model
 
 
 @extend_schema(
@@ -40,7 +41,9 @@ class RAGQueryView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        pipeline = RAGPipeline()
+        # Pass the preloaded model into the pipeline
+        pipeline = RAGPipeline(embedding_model=SENTENCE_TRANSFORMER)
+
         try:
             result = pipeline.query(question, session_id)
         except Exception as exc:
