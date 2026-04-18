@@ -1,0 +1,32 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+main.py
+.env
+backend/.env
+
+DESIGN.md
+
+# Virtual environments
+.venv
+.github
+
+# Node and Frontend
+node_modules/
+frontend/node_modules/
+.vite/
+
+# ChromaDB and local data
+backend/chroma_db/
+*.sqlite3
+
+plans
+stitch
+
+dockling.py
+AI-Powered Book Insight Assignment.pdf
+AI-Powered Book Insight Assignment.md
