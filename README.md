@@ -8,7 +8,7 @@ ErgoLens is a high-performance document intelligence platform that bridges the g
 ---
 ##  Quick Setup
 
-👉 [Setup Instructions](./setup.md)
+👉 [Setup Instructions](./SETUP.md)
 
 ---
 
